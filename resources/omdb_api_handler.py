@@ -12,11 +12,9 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path="../.env", verbose=True)
 # required for this module to work
+os.getenv('OMDB_API_KEY')
+BASE = os.getenv('BASE_URL')
 
-# os.getenv('OMDB_API_KEY')
-KEY = '501d05'
-# BASE = os.getenv('BASE_URL')
-BASE = 'http://www.omdbapi.com/'
 # res = requests.get(BASE, params={'apikey': KEY, 't': "The Beekeeper"})
 
 def is_connection_healthy(response):
