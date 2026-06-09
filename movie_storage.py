@@ -20,7 +20,7 @@ def get_movies():
       },
     }
     """
-    with open("data.json", "r") as fileobj:
+    with open("data/data.json", "r") as fileobj:
        data = json.loads(fileobj.read())
 
     return data
@@ -31,7 +31,7 @@ def save_movies(movies):
     Gets all your movies as an argument and saves them to the JSON file.
     """
     json_string = json.dumps(movies)
-    with open("data.json", "w") as fileobj:
+    with open("data/data.json", "w") as fileobj:
       fileobj.write(json_string)
     return True
 
