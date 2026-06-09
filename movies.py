@@ -1,8 +1,18 @@
+"""
+This is the main module for the Movie Project SQL+HTML+API
+It runs the CLI logic (Prompt loops, associated function calls, etc.)
+imports random,
+imports statistics,
+imports visualization_export,
+imports fuzzy_match,
+imports colorama,
+imports movie_storage_sql,
+"""
 import random  # for random movie picking
 import statistics  # for movie stats
-from visualization_export import save_histogram
 from fuzzy_match import match  # for search string missmatch-matching "fuzzy_match"
 from colorama import Fore, Style  # for colored stdout
+from visualization_export import save_histogram
 # from movie_storage import get_movies, save_movies, add_movie, update_movie, delete_movie
 import movie_storage_sql as storage
 
@@ -49,7 +59,7 @@ def is_valid_input(string_to_check):
     return len(string_to_check) > 0 and not string_to_check.isspace()
 
 
-def get_valid_rating_from_user(optional_pre_input = ""):
+def get_valid_rating_from_user(opt_pre_input = ""):
     """
     Asks user for rating 1-10 until input form user is correct.
     Calls is_valid_rating().
@@ -57,7 +67,8 @@ def get_valid_rating_from_user(optional_pre_input = ""):
     is_valid = False
     while not is_valid:
         try:
-            movie_rating = float(input("Please enter your rating of this movie (1 - 10): ")) if optional_pre_input == "" else float(optional_pre_input)
+            input_msg = "Please enter your rating of this movie (1 - 10): "
+            movie_rating = float(input(input_msg)) if opt_pre_input == "" else float(opt_pre_input)
         except ValueError as e:
             print(f"Invalid rating input! \n {e}")
             continue
@@ -65,12 +76,13 @@ def get_valid_rating_from_user(optional_pre_input = ""):
     return movie_rating
 
 
-def get_valid_release_from_user(optional_pre_input = ""):
+def get_valid_release_from_user(opt_pre_input = ""):
     """Asks user for year of release until input from user is in correct from."""
     is_valid = False
     while not is_valid:
         try:
-            release_input = int(input("Please enter the release date of this movie (1900-2026): "))  if optional_pre_input == "" else int(optional_pre_input)
+            input_msg = "Please enter the release date of this movie (1900-2026): "
+            release_input = int(input(input_msg))  if opt_pre_input == "" else int(opt_pre_input)
         except ValueError as e:
             print(f"Input must be numeric! \n {e}")
             continue
@@ -79,18 +91,20 @@ def get_valid_release_from_user(optional_pre_input = ""):
 
 
 def get_user_listing_order_choice():
-    user_choice = input("Do you want to see the latest movies listet 'f'irst or 'l'ast (f or l): ")
-    is_f_or_l = False
-    while not is_f_or_l:
-        if "f" in user_choice:
-            order = -1
-            is_f_or_l = True
-        elif "l" in user_choice:
-            order = 1
-            is_f_or_l = True
-        else:
-            print("couldn't understand your input, please try again")
-            user_choice = input("Do you want to see the latest movies listet 'f'irst or 'l'ast (f or l): ")
+    """
+    Prompts the user to choose how to list movies latest first or latest last.
+    calls itself if user input does not equal 'f' or 'l'.
+    :return order:
+    """
+    order = -1
+    user_choice = input("Do you want to see the latest movies 'f'irst or 'l'ast (f/l): ")
+    if "f" == user_choice.lower():
+        pass
+    elif "l" == user_choice.lower():
+        order = 1
+    else:
+        print("couldn't understand your input, please try again")
+        get_user_listing_order_choice()
     return order
 ##########         INPUT HELPER FUNCTIONS END          ##########
 
@@ -198,12 +212,12 @@ def command_search_movie():
     search_string = input(Fore.BLUE + \
     "Please enter a part of the title you want to search for: " + Style.RESET_ALL)
     if len(search_string) > 0:
-        lowered_search_string = search_string.lower()
-        if lowered_search_string in lower_movie_titles:
-            movie_infos = movie_database[movie_titles[lower_movie_titles.index(lowered_search_string)]]
+        lowered_search_str = search_string.lower()
+        if lowered_search_str in lower_movie_titles:
+            movie_infos = movie_database[movie_titles[lower_movie_titles.index(lowered_search_str)]]
             result += f"{search_string}, {movie_infos['rating']} ({movie_infos['year']})"
         else:
-            for fuzzy_matching_index in fuzzy_search(lowered_search_string, lower_movie_titles):
+            for fuzzy_matching_index in fuzzy_search(lowered_search_str, lower_movie_titles):
                 result += movie_titles[fuzzy_matching_index] + "\n"
             print(Fore.RED + f"'{search_string}'? Did you mean:" \
             + Style.RESET_ALL)
@@ -213,7 +227,7 @@ def command_search_movie():
 
 
 def command_list_by_rating():
-    """Reorder the movies inside movie_database by sorting according their rating and return them."""
+    """Reorder the movies inside movie_database by their rating and return them."""
     result = ''
     movie_database = storage.list_movies()
     for title, movie_info in sorted(movie_database.items(), key = lambda x : x[1]['rating'])[::-1]:
@@ -222,16 +236,17 @@ def command_list_by_rating():
 
 
 def command_list_by_release():
-    """Reorder the movies inside movie_database by sorting according their release and return them."""
+    """Reorder the movies inside movie_database by their release and return them."""
     result = ''
     movie_database = storage.list_movies()
     order = get_user_listing_order_choice()
-    #This loop is just a little helper, because the movies given in the dict didnt have a year of release.
+    #This loop is just a little helper, because the movies don't always have a year of release.
     for title, movie_info in movie_database.items():
         if movie_info['year'] == "":
             movie_info['year'] = "0"
 
-    for title, movie_info in sorted(movie_database.items(), key = lambda x : int(x[1]['year']))[::order]:
+    for title, movie_info in sorted(movie_database.items(),
+                                    key = lambda x : int(x[1]['year']))[::order]:
         result += f"{title} ({movie_info['year']}): {movie_info['rating']}\n"
     return result
 
@@ -252,7 +267,7 @@ def command_filter_movies():
     max_year_input = input("Enter end year (leave blank for no end year): ")
     max_year = get_valid_release_from_user(max_year_input) if len(max_year_input) > 0 else 2026
 
-    #This loop is just a little helper, because the movies given in the dict didnt have a year of release.
+    #This loop is just a little helper, because the movies don't always have a year of release.
     for title, movie_info in movie_database.items():
         if movie_info['year'] == "":
             movie_info['year'] = "0"
@@ -299,6 +314,10 @@ AVAILABLE_ACTIONS = {
 
 
 def show_menu():
+    """
+    Prompts the user to choose an action from AVAILABLE_ACTIONS and calls it.
+    calls function dispatch hooked functions within AVAILABLE_ACTIONS.
+    """
     print(Fore.GREEN + "********** My Movies Database **********")
     print(Style.RESET_ALL)
     print(Fore.CYAN + "Menu:")
@@ -316,7 +335,7 @@ def main():
         try:
             action_to_take = int(input(Fore.BLUE + "\nEnter choice (0-9): " + Style.RESET_ALL))
         except ValueError:
-            print(f"Given input needs to be a number, not a text please! Try again...")
+            print("Given input needs to be a number, not a text please! Try again...")
             continue
         print()
         return_val = AVAILABLE_ACTIONS[action_to_take]()
