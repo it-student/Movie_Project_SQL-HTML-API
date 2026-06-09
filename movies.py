@@ -305,14 +305,13 @@ AVAILABLE_ACTIONS = {
   1 : command_list_movies,
   2 : command_add_title,
   3 : command_delete_title,
-  4 : command_update_movie_rating,
-  5 : command_movie_stats,
-  6 : command_random_movie,
-  7 : command_search_movie,
-  8 : command_list_by_rating,
-  9 : command_list_by_release,
-  10 : command_filter_movies,
-  11 : command_save_histogram,
+  4 : command_movie_stats,
+  5 : command_random_movie,
+  6 : command_search_movie,
+  7 : command_list_by_rating,
+  8 : command_list_by_release,
+  9 : command_filter_movies,
+  10 : command_save_histogram,
 }
 
 

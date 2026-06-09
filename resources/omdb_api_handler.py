@@ -8,11 +8,15 @@ requires 'OMDB_API_KEY' and 'BASE_URL' environment variables.
 """
 import os
 import requests
+from requests.exceptions import RequestException
+from retrying import retry
 from dotenv import load_dotenv
+from urllib3.exceptions import NameResolutionError
 
-load_dotenv(dotenv_path="../.env", verbose=True)
+# load_dotenv(dotenv_path="../.env", verbose=True)
+load_dotenv(verbose=True)
 # required for this module to work
-os.getenv('OMDB_API_KEY')
+KEY = os.getenv('OMDB_API_KEY')
 BASE = os.getenv('BASE_URL')
 
 # res = requests.get(BASE, params={'apikey': KEY, 't': "The Beekeeper"})
@@ -30,6 +34,25 @@ def is_connection_healthy(response):
     else:
         return True
 
+
+@retry(wait_exponential_multiplier=500, stop_max_attempt_number=5)
+def call_api(params: dict):
+    """
+    This function is for calling omdb api using the requests library.
+    Within params the API-Key is needed, as well as the OMDB method
+    (i.e. 't' for specific title search. 'i' for imdbID search,
+    'S' for broader titles matching the query-string).
+    :param params:
+    :return res:
+    """
+    res = {}
+    try:
+        res = requests.get(BASE, params=params)
+    except RequestException as e:
+        print(e)
+    return res
+
+
 def get_movie_infos(movie_title):
     """
     This function is for requesting information about a movie from imdbApi given the title.
@@ -40,29 +63,32 @@ def get_movie_infos(movie_title):
     :return movie_infos:
     """
     found_movie_infos = {}
-    res = requests.get(BASE, params={'apikey': KEY, 't': movie_title})
-    if not is_connection_healthy(res):
-        pass
-    else:
-        response_json = res.json()
-        if response_json.get('Response'):
-            found_title = response_json.get('Title')
-            if found_title == movie_title:
-                found_year = response_json.get('Year')
-                if response_json.get('imdbRating') is not None:
-                    if response_json.get('imdbRating') != 'N/A':
-                        found_rating = response_json.get('imdbRating')
+    res = call_api({'apikey': KEY, 't': movie_title})
+    if res != {}:
+        if not is_connection_healthy(res):
+            pass
+        else:
+            response_json = res.json()
+            if response_json.get('Response'):
+                found_title = response_json.get('Title')
+                if found_title == movie_title:
+                    found_year = response_json.get('Year')
+                    if response_json.get('imdbRating') is not None:
+                        if response_json.get('imdbRating') != 'N/A':
+                            found_rating = response_json.get('imdbRating')
+                        else:
+                            found_rating = -1
                     else:
                         found_rating = -1
+                    found_poster = response_json.get('Poster')
+                    found_movie_infos = {'year': int(found_year),
+                                        'rating': float(found_rating),
+                                        'poster': found_poster}
                 else:
-                    found_rating = -1
-                found_poster = response_json.get('Poster')
-                found_movie_infos = {'year': int(found_year),
-                                    'rating': float(found_rating),
-                                    'poster': found_poster}
-            else:
-                print(f"Error getting movie infos, found title: '{found_title}' doesn't \
+                    print(f"Error getting movie infos, found title: '{found_title}' doesn't \
 match searched title: '{movie_title}'")
-        else:
-            print(f"Error getting movie infos: {response_json.get('Error')}")
+            else:
+                print(f"Error getting movie infos: {response_json.get('Error')}")
+    else:
+        print(f"Error getting movie infos: No Connection established")
     return found_movie_infos
