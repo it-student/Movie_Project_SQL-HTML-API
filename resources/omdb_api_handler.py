@@ -11,7 +11,6 @@ import requests
 from requests.exceptions import RequestException
 from retrying import retry
 from dotenv import load_dotenv
-from urllib3.exceptions import NameResolutionError
 
 # load_dotenv(dotenv_path="../.env", verbose=True)
 load_dotenv(verbose=True)
@@ -24,15 +23,11 @@ BASE = os.getenv('BASE_URL')
 def is_connection_healthy(response):
     """
     This function is for checking the connection with omdbApi given the response.status_code.
-    Returns True if the connection is healthy, False otherwise with a print of the response-error.
+    Returns True if the connection is healthy, False otherwise.
     :param response:
     :return Boolean:
     """
-    if response.status_code != 200:
-        print(f"Error getting movie infos: {response.status_code}: {response.json().get('Response')}")
-        return False
-    else:
-        return True
+    return response.status_code == 200
 
 
 @retry(wait_exponential_multiplier=500, stop_max_attempt_number=5)
@@ -47,10 +42,29 @@ def call_api(params: dict):
     """
     res = {}
     try:
-        res = requests.get(BASE, params=params)
+        res = requests.get(BASE, params=params, timeout=10.0)
     except RequestException as e:
         print(e)
     return res
+
+
+def extract_infos_from_api_response(response_json):
+    """
+    This function is for extracting infos from OMDB API response.
+    :param response_json: already mapped into JSON-data
+    :return:
+    """
+    result = {'title': response_json.get('Title'),
+              'year': response_json.get('Year'),
+              'poster': response_json.get('Poster')}
+    if response_json.get('imdbRating') is not None:
+        if response_json.get('imdbRating') != 'N/A':
+            result['rating'] = response_json.get('imdbRating')
+        else:
+            result['rating'] = -1
+    else:
+        result['rating'] = -1
+    return result
 
 
 def get_movie_infos(movie_title):
@@ -64,31 +78,19 @@ def get_movie_infos(movie_title):
     """
     found_movie_infos = {}
     res = call_api({'apikey': KEY, 't': movie_title})
-    if res != {}:
-        if not is_connection_healthy(res):
-            pass
-        else:
-            response_json = res.json()
-            if response_json.get('Response'):
-                found_title = response_json.get('Title')
-                if found_title == movie_title:
-                    found_year = response_json.get('Year')
-                    if response_json.get('imdbRating') is not None:
-                        if response_json.get('imdbRating') != 'N/A':
-                            found_rating = response_json.get('imdbRating')
-                        else:
-                            found_rating = -1
-                    else:
-                        found_rating = -1
-                    found_poster = response_json.get('Poster')
-                    found_movie_infos = {'year': int(found_year),
-                                        'rating': float(found_rating),
-                                        'poster': found_poster}
-                else:
-                    print(f"Error getting movie infos, found title: '{found_title}' doesn't \
-match searched title: '{movie_title}'")
+    if res and is_connection_healthy(res):
+        response_json = res.json()
+        if response_json.get('Response'):
+            found_movie_infos = extract_infos_from_api_response(response_json)
+            if found_movie_infos['title'] == movie_title:
+                pass
             else:
-                print(f"Error getting movie infos: {response_json.get('Error')}")
+                print(f"Error getting movie infos, found title:\
+                 '{found_movie_infos['title']}' doesn't match searched title: '{movie_title}'")
+                found_movie_infos = {}
+        else:
+            print(f"Error getting movie infos: {response_json.get('Error')}")
     else:
-        print(f"Error getting movie infos: No Connection established")
+        e_msg = res.status_code if res else 'No Connection established'
+        print(f"Error getting movie infos: {e_msg}")
     return found_movie_infos
