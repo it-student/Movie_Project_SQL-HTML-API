@@ -24,5 +24,5 @@ def save_histogram(movie_database):
     plt.xlabel("Movie Rating 1 - 10", fontdict=font2)
     plt.ylabel("Quantity of those ratings given", fontdict=font2)
     file_name = input("Please enter the filename (without extension, i.e. NO '.png'): ")
-    plt.savefig(fname=f"./static/{file_name}.png", dpi='figure', format='png')
+    plt.savefig(fname=f"./_static/{file_name}.png", dpi='figure', format='png')
     return f"Histogram saved as '{file_name}' to your 'static' working directory!"
