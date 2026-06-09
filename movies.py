@@ -14,6 +14,7 @@ from fuzzy_match import match  # for search string missmatch-matching "fuzzy_mat
 from colorama import Fore, Style  # for colored stdout
 from visualization_export import save_histogram
 from resources import omdb_api_handler as omdb
+from movie_web_generator import generate_movie_webpage
 # from movie_storage import get_movies, save_movies, add_movie, update_movie, delete_movie
 import movie_storage_sql as storage
 
@@ -256,8 +257,8 @@ def command_list_by_release():
 
 def command_filter_movies():
     """
-    Asks user of min_rating, min_year, as well as max_year as filter criterias.
-    No input is allowed and will be treatet as not a criteria to filter.
+    Asks user of min_rating, min_year, as well as max_year as filter criteria.
+    No input is allowed and will be treated as not a criteria to filter.
     """
     result = ''
     movie_database = storage.list_movies()
@@ -292,6 +293,14 @@ def command_save_histogram():
     movie_database = storage.list_movies()
     return save_histogram(movie_database)
 
+def command_generate_webpage():
+    """
+    dynamically generate a webpage for with each movie in the database shown.
+    :return success_msg: A simple str with a message of the webpage being generated.
+    """
+    movies = storage.list_movies()
+    return generate_movie_webpage(movies)
+
 
 def command_quit_program():
     """
@@ -312,6 +321,7 @@ AVAILABLE_ACTIONS = {
   8 : command_list_by_release,
   9 : command_filter_movies,
   10 : command_save_histogram,
+  11 : command_generate_webpage
 }
 
 

@@ -33,7 +33,7 @@ def is_connection_healthy(response):
 @retry(wait_exponential_multiplier=500, stop_max_attempt_number=5)
 def call_api(params: dict):
     """
-    This function is for calling omdb api using the requests library.
+    This function is for calling omdb api using the requests' library.
     Within params the API-Key is needed, as well as the OMDB method
     (i.e. 't' for specific title search. 'i' for imdbID search,
     'S' for broader titles matching the query-string).
