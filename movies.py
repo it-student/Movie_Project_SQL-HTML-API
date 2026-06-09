@@ -13,6 +13,7 @@ import statistics  # for movie stats
 from fuzzy_match import match  # for search string missmatch-matching "fuzzy_match"
 from colorama import Fore, Style  # for colored stdout
 from visualization_export import save_histogram
+from resources import omdb_api_handler as omdb
 # from movie_storage import get_movies, save_movies, add_movie, update_movie, delete_movie
 import movie_storage_sql as storage
 
@@ -121,10 +122,9 @@ def command_list_movies():
 
 def command_add_title():
     """
-    asking the user for the movies title, rating and year of release
-    and save it to the movie_database.
-    Calls get_valid_rating_from_user().
-    Calls get_valid_release_from_user().
+    asking the user for the movies title,
+    collecting movie infos from omdbApi given user input of title to add,
+    save it to the movie_database if API request was successful.
     """
     movie_database = storage.list_movies()
     available_titles = [title.lower() for title in movie_database.keys()]
@@ -135,11 +135,14 @@ def command_add_title():
             print(f"Movie {movie_title} already exist!")
         movie_title = input("Please enter the Title of the movie to add: ")
         is_valid = is_valid_input(movie_title)
-    movie_rating = get_valid_rating_from_user()
-    movie_release = get_valid_release_from_user()
-    storage.add_movie( title = movie_title,
-                        rating = movie_rating,
-                        year = movie_release )
+    # movie_rating = get_valid_rating_from_user() - DEPRECATED
+    # movie_release = get_valid_release_from_user() - DEPRECATED
+    found_on_omdb = omdb.get_movie_infos(movie_title)
+    if found_on_omdb:
+        storage.add_movie( title = movie_title,
+                            rating = found_on_omdb["rating"],
+                            year = found_on_omdb["year"],
+                            poster= found_on_omdb["poster"])
     return ''
 
 
