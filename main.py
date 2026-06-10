@@ -143,7 +143,7 @@ def command_add_title(user):
         user_id = storage.get_user_id_from_username(user)
         storage.add_movie( title = movie_title,
                             rating = found_on_omdb["rating"],
-                            year = found_on_omdb["year"],
+                            year = found_on_omdb["year"][:4],
                             poster = found_on_omdb["poster"],
                             user_id = user_id['user_id'])
     return ''
