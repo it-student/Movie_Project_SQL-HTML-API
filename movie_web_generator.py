@@ -12,10 +12,11 @@ def load_html_template(template_filename) -> str:
     with open(BASE_TEMPLATE_PATH + template_filename, 'r', encoding='utf-8') as template_file:
         return template_file.read()
 
-def generate_final_html(html_string: str) -> None:
+def generate_final_html(html_string: str) -> str:
     """ Generates | overwrites final HTML file 'index.html' """
     with open("./index.html", "w", encoding='utf-8') as file:
         file.write(html_string)
+    return 'index.html successfully (re)created!'
 
 def populate_movie_cards(movies):
     """ Populates recursively movie cards iterating through movies """
